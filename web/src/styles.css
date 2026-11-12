@@ -64,13 +64,220 @@ dd {
   font-size: 1rem;
 }
 
+.commands ol {
+  padding-left: 1.5rem;
+}
+
 .commands li {
   display: flex;
-  gap: 1rem;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin-bottom: 0.25rem;
   font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
 }
 
 .commands small {
   margin-left: auto;
   color: #8b949e;
+}
+
+button {
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  background: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+button.danger {
+  border-color: #cf222e;
+  color: #cf222e;
+}
+
+input {
+  font: inherit;
+}
+
+nav {
+  flex-wrap: wrap;
+}
+
+.card {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.intro p {
+  max-width: 70ch;
+}
+
+.hint {
+  color: #59636e;
+  font-size: 0.9rem;
+}
+
+.note {
+  font-weight: 600;
+}
+
+.flow {
+  margin: 1rem 0 0;
+  padding: 1rem;
+  background: #fff;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+}
+
+.flow svg {
+  display: block;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  font-size: 13px;
+}
+
+.flow figcaption {
+  text-align: center;
+  color: #59636e;
+}
+
+.flow .box {
+  fill: #f6f8fa;
+  stroke: #1f2328;
+  stroke-width: 1.5;
+}
+
+.flow .box.idle {
+  opacity: 0.35;
+}
+
+.flow .box-label {
+  font-weight: 600;
+}
+
+.flow .edge {
+  stroke: #d0d7de;
+  stroke-width: 2;
+}
+
+.flow .edge.active.cache {
+  stroke: #1a7f37;
+  stroke-width: 4;
+}
+
+.flow .edge.active.db {
+  stroke: #bc4c00;
+  stroke-width: 4;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 0.75rem 1rem;
+}
+
+.controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+}
+
+.controls input[type='number'] {
+  width: 6rem;
+}
+
+.controls .slider {
+  min-width: 220px;
+}
+
+.controls .buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.controls .hint,
+.controls .note {
+  width: 100%;
+  margin: 0;
+}
+
+.summaries {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2rem;
+  margin: 0.75rem 0;
+}
+
+.summary {
+  display: flex;
+  gap: 0.75rem;
+  padding-left: 0.5rem;
+  border-left: 4px solid;
+}
+
+.summary.cache {
+  border-color: #1a7f37;
+}
+
+.summary.db {
+  border-color: #bc4c00;
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.columns .commands {
+  margin-top: 1rem;
+}
+
+.badge {
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.badge.cache {
+  background: #1a7f37;
+}
+
+.badge.db {
+  background: #bc4c00;
+}
+
+pre {
+  overflow-x: auto;
+  font-size: 0.8rem;
 }

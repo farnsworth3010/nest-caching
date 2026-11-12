@@ -1,9 +1,11 @@
 import { useSyncExternalStore } from 'react';
+import { CachePage } from './pages/cache/CachePage';
 import { HealthPage } from './pages/HealthPage';
 
 // One entry per topic page; the key is the URL hash.
 const PAGES = {
   health: { title: 'Health', Page: HealthPage },
+  cache: { title: 'Cache-aside', Page: CachePage },
 };
 
 type PageId = keyof typeof PAGES;
