@@ -6,6 +6,28 @@ A hands-on demo of Redis with NestJS and Kubernetes. Each topic is a page in the
 - `web/` — React + Vite, one page per topic, hash navigation
 - `deploy/` — Docker Compose now, Kubernetes (kind) later
 
+## Screenshots
+
+Cache-aside: flow diagram, a latency chart of cache hits vs. database misses, and the Redis commands behind the last request.
+
+![Cache-aside page](docs/screenshots/cache-aside.png)
+
+Health: Redis and SQLite connectivity check.
+
+![Health page](docs/screenshots/health.png)
+
+Data types, sorted set: a leaderboard drawn from `ZRANGE … REV WITHSCORES`, next to the command cheat sheet.
+
+![Data types: sorted set](docs/screenshots/types-sorted-set.png)
+
+Data types, stream: one consumer group, two workers, entries shown as new, pending or acknowledged.
+
+![Data types: stream](docs/screenshots/types-stream.png)
+
+Data types, HyperLogLog: 100 000 visitor ids counted to within about 1% in 14 KB, against an exact Set of several MB.
+
+![Data types: HyperLogLog](docs/screenshots/types-hll.png)
+
 ## Prerequisites
 
 - Node 25 (`nvm use`)

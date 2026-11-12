@@ -5,6 +5,11 @@ import type { Redis } from './redis.module';
 
 export type CommandEntry = { cmd: string; args: string[]; reply: unknown; ms: number };
 
+const MAX_ARGS = 20;
+
+// Bulk commands (PFADD with 1 000 ids) would bloat every response, so long arg lists are cut.
+const clip = (args: string[]) => (args.length > MAX_ARGS ? [...args.slice(0, MAX_ARGS), `… +${args.length - MAX_ARGS} more`] : args);
+
 // One array per HTTP request; filled by recordCommands, returned by CommandsInterceptor.
 export const commandLog = new AsyncLocalStorage<CommandEntry[]>();
 
@@ -20,11 +25,18 @@ export function recordCommands(client: Redis) {
 
     const [name, ...args] = params[0].map(String);
     const start = performance.now();
-    const reply = await send.apply(this, params);
+    const entry = (reply: unknown) => ({ cmd: name, args: clip(args), reply, ms: +(performance.now() - start).toFixed(3) });
 
-    log.push({ cmd: name, args, reply, ms: +(performance.now() - start).toFixed(3) });
+    try {
+      const reply = await send.apply(this, params);
 
-    return reply;
+      log.push(entry(reply));
+
+      return reply;
+    } catch (err) {
+      log.push(entry(`(error) ${(err as Error).message}`));
+      throw err;
+    }
   } as Redis['sendCommand'];
 }
 
