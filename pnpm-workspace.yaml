@@ -1,0 +1,14 @@
+packages:
+  - api
+  - web
+
+# Supply-chain protection
+minimumReleaseAge: 10080 # 7 days
+minimumReleaseAgeStrict: true
+trustPolicy: no-downgrade
+blockExoticSubdeps: true
+strictDepBuilds: true
+saveExact: true
+
+# Dependency build scripts are blocked unless listed here
+allowBuilds: {}

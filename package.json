@@ -1,0 +1,13 @@
+{
+  "name": "nest-caching",
+  "private": true,
+  "engines": {
+    "node": ">=25"
+  },
+  "scripts": {
+    "dev": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r exec tsc --noEmit"
+  },
+  "packageManager": "pnpm@12.18.0"
+}
