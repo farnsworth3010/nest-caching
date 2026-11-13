@@ -1,15 +1,12 @@
-import type { ComponentType, ReactNode } from 'react';
+import type { ComponentType } from 'react';
 
 // Each View narrows the state shape its own endpoint returns.
 export type ViewProps<S = any> = { state: S; result: unknown };
 
+// Title, description, uses, cheat descriptions and action labels live in ./i18n.ts under the same id.
 export type TypeDemo = {
-  id: string;
-  title: string;
+  id: 'string' | 'hash' | 'list' | 'set' | 'zset' | 'stream' | 'bitmap' | 'hll' | 'geo' | 'json' | 'timeseries' | 'probabilistic' | 'vector';
   group: 'Core' | 'Redis 8';
-  about: ReactNode;
-  uses: string[];
-  cheats: [command: string, what: string, complexity: string][];
-  actions: [id: string, label: string][];
+  cheats: string[];
   View: ComponentType<ViewProps>;
 };

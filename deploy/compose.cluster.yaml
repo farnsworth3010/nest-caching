@@ -1,0 +1,55 @@
+name: nest-caching-cluster
+
+# Host network: nodes announce 127.0.0.1:<port>, which the API on the host can reach; bridge NAT would hide the cluster bus.
+# No volumes: nodes.conf lives in the container, so `down` + `up` always starts a fresh cluster.
+x-node: &node
+  image: redis:8.10.3
+  network_mode: host
+  healthcheck:
+    test: ["CMD-SHELL", "redis-cli -p $$PORT ping"]
+    interval: 2s
+    timeout: 2s
+    retries: 15
+  command: ["sh", "-c", "exec redis-server --port $$PORT --bind 127.0.0.1 --cluster-enabled yes --cluster-config-file nodes-$$PORT.conf --cluster-node-timeout 5000 --save '' --appendonly no"]
+
+services:
+  node-7000: { <<: *node, environment: { PORT: 7000 } }
+  node-7001: { <<: *node, environment: { PORT: 7001 } }
+  node-7002: { <<: *node, environment: { PORT: 7002 } }
+  node-7003: { <<: *node, environment: { PORT: 7003 } }
+  node-7004: { <<: *node, environment: { PORT: 7004 } }
+  node-7005: { <<: *node, environment: { PORT: 7005 } }
+  # Spare nodes, not joined: the page's "Add node" button meets them into the cluster.
+  node-7006: { <<: *node, environment: { PORT: 7006 } }
+  node-7007: { <<: *node, environment: { PORT: 7007 } }
+
+  # Forms 3 masters + 3 replicas unless the cluster already exists. It stays up with a healthcheck because
+  # `up --wait` does not wait for a one-shot container to finish.
+  init:
+    image: redis:8.10.3
+    network_mode: host
+    init: true
+    healthcheck:
+      test: ["CMD", "test", "-f", "/tmp/ready"]
+      interval: 1s
+      retries: 60
+    depends_on:
+      node-7000: { condition: service_healthy }
+      node-7001: { condition: service_healthy }
+      node-7002: { condition: service_healthy }
+      node-7003: { condition: service_healthy }
+      node-7004: { condition: service_healthy }
+      node-7005: { condition: service_healthy }
+    command:
+      - sh
+      - -c
+      - |
+        redis-cli -p 7000 cluster info | grep -q cluster_known_nodes:1 &&
+          redis-cli --cluster create 127.0.0.1:7000 127.0.0.1:7001 127.0.0.1:7002 127.0.0.1:7003 127.0.0.1:7004 127.0.0.1:7005 --cluster-replicas 1 --cluster-yes
+        until redis-cli --cluster check 127.0.0.1:7000 > /dev/null; do sleep 0.5; done
+        # A node answers CLUSTERDOWN for a few seconds after it learns the slot map; wait until every node is ok.
+        for port in 7000 7001 7002 7003 7004 7005; do
+          until redis-cli -p $$port cluster info | grep -q cluster_state:ok; do sleep 0.5; done
+        done
+        touch /tmp/ready
+        exec sleep infinity

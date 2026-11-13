@@ -1,0 +1,80 @@
+# One master, two replicas, three Sentinels. Host networking, so the addresses Sentinel announces
+# (127.0.0.1:638x) are the ones the API on the host connects to; every process binds 127.0.0.1 only.
+name: nest-caching-replication
+
+x-redis: &redis
+  image: redis:8.10.3
+  network_mode: host
+
+# Sentinel rewrites its config file at runtime, so each container writes a fresh one to /tmp on start.
+x-sentinel: &sentinel
+  <<: *redis
+  depends_on:
+    redis-6380:
+      condition: service_healthy
+  command:
+    - sh
+    - -c
+    - |
+      cat > /tmp/sentinel.conf <<EOF
+      port $$PORT
+      bind 127.0.0.1
+      sentinel monitor mymaster 127.0.0.1 6380 2
+      sentinel down-after-milliseconds mymaster 3000
+      sentinel failover-timeout mymaster 10000
+      EOF
+      exec redis-sentinel /tmp/sentinel.conf
+  healthcheck:
+    test: ["CMD-SHELL", "redis-cli -p $$PORT ping"]
+    interval: 2s
+    timeout: 2s
+    retries: 15
+
+services:
+  redis-6380:
+    <<: *redis
+    command: redis-server --port 6380 --bind 127.0.0.1 --save "" --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6380", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+
+  redis-6381:
+    <<: *redis
+    command: redis-server --port 6381 --bind 127.0.0.1 --save "" --appendonly no --replicaof 127.0.0.1 6380
+    depends_on:
+      redis-6380:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6381", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+
+  redis-6382:
+    <<: *redis
+    command: redis-server --port 6382 --bind 127.0.0.1 --save "" --appendonly no --replicaof 127.0.0.1 6380
+    depends_on:
+      redis-6380:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6382", "ping"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+
+  sentinel-26380:
+    <<: *sentinel
+    environment:
+      PORT: 26380
+
+  sentinel-26381:
+    <<: *sentinel
+    environment:
+      PORT: 26381
+
+  sentinel-26382:
+    <<: *sentinel
+    environment:
+      PORT: 26382

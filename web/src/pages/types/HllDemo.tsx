@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import type { TypeDemo, ViewProps } from './types';
 
 type State = {
@@ -10,32 +11,33 @@ type State = {
   merged: number;
 };
 
-const kb = (bytes: number | null) => (bytes === null ? '–' : bytes > 1e6 ? `${(bytes / 1e6).toFixed(2)} MB` : `${(bytes / 1024).toFixed(1)} KB`);
-
 function View({ state }: ViewProps<State>) {
   const max = Math.max(state.hllBytes ?? 0, state.setBytes ?? 0, 1);
+  const { t, i18n } = useTranslation('types');
+  const kb = (bytes: number | null) =>
+    bytes === null ? '–' : bytes > 1e6 ? t('hll.mb', { v: (bytes / 1e6).toFixed(2) }) : t('hll.kb', { v: (bytes / 1024).toFixed(1) });
 
-  if (!state.exact) return <p>Load 100 000 visitor ids to compare HyperLogLog with an exact Set.</p>;
+  if (!state.exact) return <p>{t('hll.empty')}</p>;
 
   return (
     <>
       <dl>
-        <dt>PFCOUNT (estimate)</dt>
-        <dd>{state.estimate.toLocaleString()}</dd>
-        <dt>SCARD (exact)</dt>
-        <dd>{state.exact.toLocaleString()}</dd>
-        <dt>Error</dt>
+        <dt>{t('hll.estimate')}</dt>
+        <dd>{state.estimate.toLocaleString(i18n.language)}</dd>
+        <dt>{t('hll.exact')}</dt>
+        <dd>{state.exact.toLocaleString(i18n.language)}</dd>
+        <dt>{t('hll.error')}</dt>
         <dd>{state.errorPct}%</dd>
         {state.merged > 0 && (
           <>
-            <dt>Campaign (PFCOUNT)</dt>
-            <dd>{state.campaign.toLocaleString()}</dd>
-            <dt>Merged (PFMERGE)</dt>
-            <dd>{state.merged.toLocaleString()}</dd>
+            <dt>{t('hll.campaign')}</dt>
+            <dd>{state.campaign.toLocaleString(i18n.language)}</dd>
+            <dt>{t('hll.merged')}</dt>
+            <dd>{state.merged.toLocaleString(i18n.language)}</dd>
           </>
         )}
       </dl>
-      <h3>Memory (MEMORY USAGE)</h3>
+      <h3>{t('hll.memory')}</h3>
       <ol className="bars">
         <li>
           <span>HyperLogLog</span>
@@ -48,27 +50,19 @@ function View({ state }: ViewProps<State>) {
           <strong>{kb(state.setBytes)}</strong>
         </li>
       </ol>
-      {state.hllBytes && state.setBytes && <p className="note">The Set takes {Math.round(state.setBytes / state.hllBytes)}× more memory.</p>}
+      {state.hllBytes && state.setBytes && <p className="note">{t('hll.ratio', { count: Math.round(state.setBytes / state.hllBytes) })}</p>}
     </>
   );
 }
 
 export const hll: TypeDemo = {
   id: 'hll',
-  title: 'HyperLogLog',
   group: 'Core',
-  about:
-    'HyperLogLog counts distinct items without storing them. It never uses more than about 12 KB per key and its count is off by about 0.81% on average. You cannot list or check members, only count them and merge counters.',
-  uses: ['Unique visitors, searches, IPs per day', 'Distinct counts across many keys (PFMERGE)', 'Anywhere an exact Set would be too big'],
   cheats: [
-    ['PFADD key item [item …]', 'Add items, returns 1 if the estimate changed', 'O(1) per item'],
-    ['PFCOUNT key [key …]', 'Estimated distinct count', 'O(1) (cached)'],
-    ['PFMERGE dest k1 k2', 'Union of several HLLs', 'O(N) keys'],
-    ['MEMORY USAGE key', 'Bytes a key uses', 'O(N) samples'],
-  ],
-  actions: [
-    ['load', 'PFADD + SADD 100 000 ids'],
-    ['merge', 'PFADD campaign + PFMERGE'],
+    'PFADD key item [item …]',
+    'PFCOUNT key [key …]',
+    'PFMERGE dest k1 k2',
+    'MEMORY USAGE key',
   ],
   View,
 };

@@ -1,11 +1,13 @@
+import { useTranslation } from 'react-i18next';
 import type { TypeDemo, ViewProps } from './types';
 
 type State = { value: string; score: number }[];
 
 function View({ state }: ViewProps<State>) {
   const max = Math.max(1, ...state.map((e) => e.score));
+  const { t } = useTranslation('types');
 
-  if (!state.length) return <p>Leaderboard is empty.</p>;
+  if (!state.length) return <p>{t('zset.empty')}</p>;
 
   return (
     <ol className="bars">
@@ -22,25 +24,14 @@ function View({ state }: ViewProps<State>) {
 
 export const zset: TypeDemo = {
   id: 'zset',
-  title: 'Sorted set',
   group: 'Core',
-  about:
-    'A sorted set keeps unique members ordered by a numeric score. Updating a score re-sorts in O(log N), and range queries by rank or by score are fast, which makes it the classic leaderboard and priority structure.',
-  uses: ['Leaderboards and rankings', 'Priority queues and scheduled jobs (score = timestamp)', 'Sliding-window rate limiters (phase 3)'],
   cheats: [
-    ['ZADD key score m [score m …]', 'Add or update members', 'O(log N)'],
-    ['ZINCRBY key n m', 'Add to a score', 'O(log N)'],
-    ['ZRANGE key 0 -1 REV WITHSCORES', 'Top members, highest first', 'O(log N + M)'],
-    ['ZRANK / ZREVRANK key m', 'Position from the bottom / top', 'O(log N)'],
-    ['ZRANGEBYSCORE key min max', 'Members with score in a range', 'O(log N + M)'],
-    ['ZREM key m', 'Remove a member', 'O(log N)'],
-  ],
-  actions: [
-    ['seed', 'ZADD 5 players'],
-    ['score', 'ZINCRBY random player'],
-    ['rank', 'ZRANK + ZREVRANK carol'],
-    ['range', 'ZRANGEBYSCORE 80 +inf'],
-    ['remove', 'ZREM erin'],
+    'ZADD key score m [score m …]',
+    'ZINCRBY key n m',
+    'ZRANGE key 0 -1 REV WITHSCORES',
+    'ZRANK / ZREVRANK key m',
+    'ZRANGEBYSCORE key min max',
+    'ZREM key m',
   ],
   View,
 };

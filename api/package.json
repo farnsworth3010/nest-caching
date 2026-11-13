@@ -8,7 +8,8 @@
     "dev": "nest start --watch",
     "start:dev": "nest start --watch",
     "build": "nest build",
-    "start": "node dist/main.js"
+    "start": "node dist/main.js",
+    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test test/*.mts"
   },
   "dependencies": {
     "@nestjs/common": "12.3.3",

@@ -588,3 +588,457 @@ td {
   }
 
 }
+
+.meter {
+  height: 1rem;
+  margin-top: 0.5rem;
+  background: #eaeef2;
+  border-radius: 3px;
+}
+
+.meter div {
+  height: 100%;
+  border-radius: 3px;
+  background: #1a7f37;
+  transition: width 0.1s;
+}
+
+.meter div.over {
+  background: #cf222e;
+}
+
+.timeline .axis {
+  stroke: #d0d7de;
+}
+
+.timeline .limit {
+  stroke: #cf222e;
+  stroke-dasharray: 6 4;
+}
+
+.timeline .edge-line {
+  stroke: #59636e;
+  stroke-width: 1.5;
+}
+
+.timeline .ok,
+.gantt .sold,
+.legend .sold {
+  fill: #1a7f37;
+  background: #1a7f37;
+}
+
+.timeline .denied,
+.gantt .oversold,
+.gantt .timeout,
+.legend .oversold {
+  fill: #cf222e;
+  background: #cf222e;
+}
+
+.gantt .sold-out,
+.legend .sold-out {
+  fill: #8c959f;
+  background: #8c959f;
+}
+
+.gantt {
+  display: block;
+  width: 100%;
+  margin-top: 0.75rem;
+  font-size: 13px;
+}
+
+.gantt .wait {
+  stroke: #d0d7de;
+}
+
+.legend span {
+  padding: 0 0.4rem;
+  border-radius: 3px;
+  color: #fff;
+}
+
+.run.bad {
+  border-color: #cf222e;
+}
+
+.run.good {
+  border-color: #1a7f37;
+}
+
+.stampede .buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+/* k8s */
+.pods {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pods li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.6rem;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.pods li.self {
+  border-color: #0969da;
+  box-shadow: inset 0 0 0 1px #0969da;
+}
+
+.timeline .pod-count {
+  fill: none;
+  stroke: #0969da;
+  stroke-width: 2.5;
+}
+
+/* replication */
+.replication rect {
+  fill: #f6f8fa;
+  stroke: #1f2328;
+  stroke-width: 1.5;
+}
+
+.replication .master rect {
+  fill: #dafbe1;
+  stroke: #1a7f37;
+  stroke-width: 2.5;
+}
+
+.replication .down rect {
+  fill: #ffebe9;
+  stroke: #cf222e;
+  stroke-dasharray: 6 4;
+}
+
+.replication .sentinel rect {
+  fill: #ddf4ff;
+  stroke: #0969da;
+}
+
+.replication .box-label {
+  font-weight: 600;
+}
+
+.replication .alert {
+  fill: #cf222e;
+  font-weight: 600;
+}
+
+.replication .link {
+  stroke-width: 3;
+}
+
+.replication .link.ok {
+  stroke: #1a7f37;
+}
+
+.replication .link.broken {
+  stroke: #cf222e;
+  stroke-dasharray: 6 4;
+}
+
+.probes {
+  display: block;
+  width: 100%;
+  margin-top: 0.75rem;
+  font-size: 13px;
+}
+
+.probes .ok {
+  fill: #1a7f37;
+}
+
+.probes .failed {
+  fill: #cf222e;
+}
+
+/* cluster */
+.slot-bar {
+  display: block;
+  width: 100%;
+  margin-top: 0.75rem;
+  font-size: 12px;
+}
+
+.slot-bar .key {
+  stroke: #59636e;
+  stroke-opacity: 0.5;
+}
+
+.slot-bar .moved,
+.legend .moved {
+  fill: #1f2328;
+  background: #1f2328;
+}
+
+.slot-bar .in-flight,
+.legend .in-flight {
+  fill: #cf222e;
+  background: #cf222e;
+}
+
+.shards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shards li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.6rem;
+  border: 1px solid #d0d7de;
+  border-top-width: 4px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.shards li.spare {
+  border-style: dashed;
+  color: #59636e;
+}
+
+.shards .replica {
+  color: #59636e;
+}
+
+.hashtag {
+  margin: 0.75rem 0;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.hashtag th,
+.hashtag td {
+  padding: 0.2rem 0.75rem 0.2rem 0;
+  text-align: left;
+}
+
+.redirects li {
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
+}
+
+/* k8s: Redis probe */
+.probes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.probes li {
+  min-width: 1.4rem;
+  padding: 0.1rem 0.2rem;
+  border-radius: 3px;
+  color: #fff;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.probes .ok {
+  background: #1a7f37;
+}
+
+.probes .failed {
+  background: #cf222e;
+}
+
+/* real-world */
+.rw .cheats td:last-child {
+  white-space: normal;
+  color: inherit;
+}
+
+.rw select {
+  font: inherit;
+}
+
+.rw .controls {
+  margin-bottom: 0.75rem;
+}
+
+.rw-grow {
+  flex: 1 1 16rem;
+}
+
+.rw-grow input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.rw-elsewhere {
+  font-size: 0.9rem;
+}
+
+.rw-simulated {
+  margin-left: 0.25rem;
+  background: #8250df;
+  font-size: 0.75rem;
+  vertical-align: middle;
+}
+
+.rw-diagram svg {
+  font-size: 14px;
+}
+
+.rw-node rect {
+  fill: #f6f8fa;
+  stroke: #1f2328;
+  stroke-width: 1.5;
+}
+
+.rw-node.redis rect {
+  fill: #ffebe9;
+  stroke: #cf222e;
+}
+
+.rw-node.llm rect {
+  fill: #fbefff;
+  stroke: #8250df;
+  stroke-dasharray: 5 3;
+}
+
+.rw-node.db rect {
+  fill: #fff1e5;
+  stroke: #bc4c00;
+}
+
+.rw-node.worker rect,
+.rw-node.app rect {
+  fill: #ddf4ff;
+  stroke: #0969da;
+}
+
+.rw-edge {
+  stroke: #59636e;
+  stroke-width: 1.5;
+}
+
+.rw-diagram marker path {
+  fill: #59636e;
+}
+
+.rw-edge-label {
+  fill: #59636e;
+  font-size: 12px;
+  /* A white halo keeps labels readable where they cross a line. */
+  paint-order: stroke;
+  stroke: #fff;
+  stroke-width: 4px;
+}
+
+.rw-out {
+  margin-top: 0.75rem;
+}
+
+.rw-out h3 {
+  margin: 0.75rem 0 0.25rem;
+}
+
+.bars li.rw-me {
+  font-weight: 700;
+}
+
+.bars li.rw-me .bar {
+  background: #cf222e;
+}
+
+.rw-timelines {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.75rem;
+}
+
+.rw-timelines section {
+  padding: 0.5rem;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.rw-timelines h3 {
+  margin: 0 0 0.25rem;
+}
+
+.rw-timelines ul {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.rw-merged {
+  color: #8250df;
+}
+
+.rw-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0;
+  list-style: none;
+}
+
+.rw-chips li {
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: #dafbe1;
+}
+
+.rw-prompt {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: 0.5rem;
+  background: #f6f8fa;
+  border-radius: 6px;
+}
+
+.rw .badge {
+  white-space: nowrap;
+}
+
+.rw th {
+  overflow-wrap: normal;
+}
+
+.rw-simulated {
+  display: inline-block;
+}
+
+@media (max-width: 700px) {
+  .rw-diagram {
+    overflow-x: auto;
+  }
+
+  .rw-diagram svg {
+    min-width: 540px;
+  }
+}
+
+/* i18n */
+nav .lang {
+  margin-left: auto;
+  padding: 0.2rem 0.6rem;
+}

@@ -14,42 +14,63 @@ import {
 } from '@nestjs/common';
 import { DatabaseSync } from 'node:sqlite';
 import { setTimeout as sleep } from 'node:timers/promises';
+import { acquire, release } from '../lock/lock';
+import { trimLog } from '../redis/command-log';
 import { REDIS, type Redis } from '../redis/redis.module';
 
 const TTL_SECONDS = 60;
 const MAX_DELAY_MS = 2000;
+const LOCK_TTL_MS = 3000;
+const POLL_MS = 25;
+const MAX_STAMPEDE = 200;
+const MAX_COMMANDS = 40;
+const STAMPEDE_ID = 7;
 const key = (id: number) => `product:${id}`;
 
 @Controller()
 export class CacheController {
+  private dbLoads = 0;
+
   constructor(
     private readonly db: DatabaseSync,
     @Inject(REDIS) private readonly redis: Redis,
   ) {}
 
   @Get('products/:id')
-  async product(@Param('id', ParseIntPipe) id: number, @Query('delay', new DefaultValuePipe(0), ParseIntPipe) delay: number) {
-    const start = performance.now();
-
+  async product(
+    @Param('id', ParseIntPipe) id: number,
+    @Query('delay', new DefaultValuePipe(0), ParseIntPipe) delay: number,
+    @Query('lock', new DefaultValuePipe(0), ParseIntPipe) lock: number,
+  ) {
     if (id < 1) throw new BadRequestException('id must be a positive integer');
     if (delay < 0 || delay > MAX_DELAY_MS) throw new BadRequestException(`delay must be an integer 0..${MAX_DELAY_MS}`);
 
-    const cached = await this.redis.get(key(id));
-    let product: unknown = cached && JSON.parse(cached);
+    return this.read(id, delay, lock === 1);
+  }
 
-    if (!product) {
-      // Simulates network latency to a remote database.
-      await sleep(delay);
+  // Flushes one product and fires n concurrent reads at it, like a hot key expiring under load.
+  @Post('cache/stampede')
+  @HttpCode(200)
+  async stampede(
+    @Query('lock', new DefaultValuePipe(0), ParseIntPipe) lock: number,
+    @Query('n', new DefaultValuePipe(50), ParseIntPipe) n: number,
+    @Query('delay', new DefaultValuePipe(200), ParseIntPipe) delay: number,
+  ) {
+    if (n < 1 || n > MAX_STAMPEDE) throw new BadRequestException(`n must be an integer 1..${MAX_STAMPEDE}`);
+    if (delay < 0 || delay > MAX_DELAY_MS) throw new BadRequestException(`delay must be an integer 0..${MAX_DELAY_MS}`);
 
-      product = this.load(id);
-      if (!product) throw new NotFoundException(`product ${id} not found`);
+    await this.redis.unlink(key(STAMPEDE_ID));
 
-      await this.redis.set(key(id), JSON.stringify(product), { EX: TTL_SECONDS });
-    }
+    const loadsBefore = this.dbLoads;
+    const start = performance.now();
+    const results = await Promise.all(Array.from({ length: n }, () => this.read(STAMPEDE_ID, delay, lock === 1)));
 
-    const ttl = await this.redis.ttl(key(id));
-
-    return { product, source: cached ? 'cache' : 'db', serverMs: Math.round(performance.now() - start), ttl };
+    return {
+      dbLoads: this.dbLoads - loadsBefore,
+      served: results.length,
+      totalMs: Math.round(performance.now() - start),
+      commandCount: trimLog(MAX_COMMANDS),
+    };
   }
 
   @Delete('cache/products/:id')
@@ -88,8 +109,62 @@ export class CacheController {
     return { keys, hits: stat('keyspace_hits'), misses: stat('keyspace_misses') };
   }
 
+  // With lock, only the miss that wins lock:product:{id} loads from SQL; the others poll the cache key.
+  private async read(id: number, delay: number, lock: boolean) {
+    const start = performance.now();
+    const cached = await this.redis.get(key(id));
+    let product: unknown = cached && JSON.parse(cached);
+    let source: 'cache' | 'db' = cached ? 'cache' : 'db';
+
+    if (!product) {
+      const token = lock ? await acquire(this.redis, key(id), LOCK_TTL_MS, 0) : undefined;
+
+      if (lock && !token) {
+        product = await this.waitForCache(id, delay + LOCK_TTL_MS);
+        source = 'cache';
+      }
+
+      // No lock, the lock winner, or a loser that gave up waiting.
+      if (!product) {
+        product = await this.loadAndCache(id, delay).finally(() => token && release(this.redis, key(id), token));
+        source = 'db';
+      }
+    }
+
+    const ttl = await this.redis.ttl(key(id));
+
+    return { product, source, serverMs: Math.round(performance.now() - start), ttl };
+  }
+
+  private async loadAndCache(id: number, delay: number) {
+    // Simulates a complex SQL query.
+    await sleep(delay);
+
+    const product = this.load(id);
+    if (!product) throw new NotFoundException(`product ${id} not found`);
+
+    await this.redis.set(key(id), JSON.stringify(product), { EX: TTL_SECONDS });
+
+    return product;
+  }
+
+  private async waitForCache(id: number, timeoutMs: number) {
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+      await sleep(POLL_MS);
+
+      const cached = await this.redis.get(key(id));
+      if (cached) return JSON.parse(cached) as unknown;
+    }
+
+    return undefined;
+  }
+
   // The slow path: no index on reviews.product_id, so the aggregate scans the whole table.
   private load(id: number) {
+    this.dbLoads++;
+
     const row = this.db.prepare('SELECT id, name, category, price, description FROM products WHERE id = ?').get(id);
     if (!row) return undefined;
 

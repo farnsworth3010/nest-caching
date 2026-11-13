@@ -1,4 +1,6 @@
+import { useTranslation } from 'react-i18next';
 import type { Command } from './api';
+import './CommandsPanel.i18n';
 
 const MAX = 160;
 const MAX_ROWS = 25;
@@ -9,6 +11,8 @@ function Clip({ text }: { text: string }) {
 }
 
 function Rows({ commands }: { commands: Command[] }) {
+  const { t } = useTranslation('commands');
+
   return (
     <ol>
       {commands.slice(0, MAX_ROWS).map((c, i) => (
@@ -22,7 +26,7 @@ function Rows({ commands }: { commands: Command[] }) {
           <small>{c.ms} ms</small>
         </li>
       ))}
-      {commands.length > MAX_ROWS && <li className="more">… {commands.length - MAX_ROWS} more commands</li>}
+      {commands.length > MAX_ROWS && <li className="more">{t('more', { count: commands.length - MAX_ROWS })}</li>}
     </ol>
   );
 }
@@ -31,14 +35,15 @@ function Rows({ commands }: { commands: Command[] }) {
 export function CommandsPanel({ commands, split = commands.length }: { commands: Command[]; split?: number }) {
   const own = commands.slice(0, split);
   const refresh = commands.slice(split);
+  const { t } = useTranslation('commands');
 
   return (
     <section className="commands">
-      <h2>Redis commands</h2>
-      {own.length === 0 ? <p>No Redis commands in this request.</p> : <Rows commands={own} />}
+      <h2>{t('title')}</h2>
+      {own.length === 0 ? <p>{t('none')}</p> : <Rows commands={own} />}
       {refresh.length > 0 && (
         <div className="refresh">
-          <h3>Then read the state for the view</h3>
+          <h3>{t('refresh')}</h3>
           <Rows commands={refresh} />
         </div>
       )}

@@ -1,0 +1,11 @@
+# Official metrics-server release manifest; kind kubelets use self-signed certs, hence --kubelet-insecure-tls.
+resources:
+  - https://github.com/kubernetes-sigs/metrics-server/releases/download/v0.9.1/components.yaml
+patches:
+  - target:
+      kind: Deployment
+      name: metrics-server
+    patch: |
+      - op: add
+        path: /spec/template/spec/containers/0/args/-
+        value: --kubelet-insecure-tls

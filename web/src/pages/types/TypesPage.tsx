@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import { api, type Command } from '../../api';
 import { CommandsPanel } from '../../CommandsPanel';
 import { bitmap } from './BitmapDemo';
 import { geo } from './GeoDemo';
 import { hash } from './HashDemo';
 import { hll } from './HllDemo';
+import './i18n';
 import { json } from './JsonDemo';
 import { list } from './ListDemo';
 import { probabilistic } from './ProbabilisticDemo';
@@ -30,6 +32,8 @@ export function TypesPage() {
   const [busy, setBusy] = useState(false);
   const demo = DEMOS.find((d) => d.id === id)!;
   const data = loaded?.type === id ? loaded : undefined;
+  const { t } = useTranslation('types');
+  const text = t(id, { returnObjects: true });
 
   useEffect(() => {
     let current = true;
@@ -60,21 +64,19 @@ export function TypesPage() {
 
   return (
     <>
-      <h1>Redis data types</h1>
+      <h1>{t('page.title')}</h1>
       <p className="intro">
-        Every Redis 8 data type with a small scenario. Each button runs a fixed set of commands; the panel below lists
-        exactly what ran. Pub/Sub is a messaging feature, not a data type (for durable messages use Streams). The Query
-        Engine (<code>FT.CREATE</code>, <code>FT.SEARCH</code>) indexes Hash and JSON keys and is not shown here.
+        <Trans t={t} i18nKey="page.intro" components={{ code: <code /> }} />
       </p>
 
       <div className="types">
-        <aside className="type-list" aria-label="Data types">
+        <aside className="type-list" aria-label={t('page.list')}>
           {(['Core', 'Redis 8'] as const).map((group) => (
             <div key={group}>
-              <h2>{group}</h2>
+              <h2>{t(`page.groups.${group}`)}</h2>
               {DEMOS.filter((d) => d.group === group).map((d) => (
                 <button key={d.id} aria-current={d.id === id ? 'true' : undefined} onClick={() => setId(d.id)}>
-                  {d.title}
+                  {t(`${d.id}.title`)}
                 </button>
               ))}
             </div>
@@ -82,53 +84,53 @@ export function TypesPage() {
         </aside>
 
         <article className="type-demo">
-          <h2>{demo.title}</h2>
-          <p>{demo.about}</p>
+          <h2>{text.title}</h2>
+          <p>{text.about}</p>
           <ul>
-            {demo.uses.map((u) => (
+            {text.uses.map((u) => (
               <li key={u}>{u}</li>
             ))}
           </ul>
           <table className="cheats">
             <thead>
               <tr>
-                <th>Command</th>
-                <th>What it does</th>
-                <th>Cost</th>
+                <th>{t('page.command')}</th>
+                <th>{t('page.what')}</th>
+                <th>{t('page.cost')}</th>
               </tr>
             </thead>
             <tbody>
-              {demo.cheats.map(([cmd, what, cost]) => (
+              {demo.cheats.map((cmd, i) => (
                 <tr key={cmd}>
                   <td>
                     <code>{cmd}</code>
                   </td>
-                  <td>{what}</td>
-                  <td>{cost}</td>
+                  <td>{text.cheats[i][0]}</td>
+                  <td>{text.cheats[i][1]}</td>
                 </tr>
               ))}
             </tbody>
           </table>
 
           <div className="buttons">
-            {demo.actions.map(([action, label]) => (
+            {Object.entries(text.actions).map(([action, label]) => (
               <button key={action} disabled={busy} onClick={() => run(action)}>
                 {label}
               </button>
             ))}
             <button className="danger" disabled={busy} onClick={() => run('reset')}>
-              Reset
+              {t('page.reset')}
             </button>
           </div>
           {error && <p className="error">{error}</p>}
 
           <section className="card">
-            <h2>Current state</h2>
-            {data ? <demo.View state={data.state} result={data.result} /> : <p>Loading…</p>}
+            <h2>{t('page.state')}</h2>
+            {data ? <demo.View state={data.state} result={data.result} /> : <p>{t('page.loading')}</p>}
           </section>
           {data?.result !== undefined && (
             <details className="card result">
-              <summary>Last result (after node-redis transforms the reply)</summary>
+              <summary>{t('page.result')}</summary>
               <pre>{JSON.stringify(data.result, null, 2)}</pre>
             </details>
           )}

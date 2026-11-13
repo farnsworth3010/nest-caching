@@ -1,0 +1,5 @@
+namespace: nest-caching
+resources:
+  - namespace.yaml
+  - redis.yaml
+  - api.yaml

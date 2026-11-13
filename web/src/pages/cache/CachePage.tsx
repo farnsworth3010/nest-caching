@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { flushSync } from 'react-dom';
+import { Trans, useTranslation } from 'react-i18next';
 import { api, type Command } from '../../api';
 import { CommandsPanel } from '../../CommandsPanel';
 import { FlowDiagram } from './FlowDiagram';
+import './i18n';
 import { LatencyChart } from './LatencyChart';
 import type { ProductResponse, Sample } from './types';
 
@@ -10,6 +12,9 @@ const PRODUCTS = 5000;
 const randomId = () => 1 + Math.floor(Math.random() * PRODUCTS);
 
 type Last = ProductResponse & { clientMs: number };
+type Stampede = { locked: boolean; dbLoads: number; served: number; totalMs: number };
+
+const STAMPEDE_N = 50;
 
 export function CachePage() {
   const [id, setId] = useState(42);
@@ -20,6 +25,8 @@ export function CachePage() {
   const [commands, setCommands] = useState<Command[]>([]);
   const [note, setNote] = useState<string>();
   const [busy, setBusy] = useState(false);
+  const [stampedes, setStampedes] = useState<Stampede[]>([]);
+  const { t } = useTranslation('cache');
 
   // Runs one action at a time and shows its error instead of throwing.
   const act = async (fn: () => Promise<void>) => {
@@ -62,97 +69,133 @@ export function CachePage() {
     setNote(describe(res));
   };
 
+  const stampede = async (locked: boolean) => {
+    const res = await api<Omit<Stampede, 'locked'> & { commandCount: number }>(`/cache/stampede?lock=${locked ? 1 : 0}&n=${STAMPEDE_N}&delay=${delay}`, {
+      method: 'POST',
+    });
+
+    setStampedes((prev) => [...prev.filter((s) => s.locked !== locked), { ...res, locked }]);
+    setCommands(res.commands);
+    setNote(t('notes.shown', { shown: res.commands.length, total: res.commandCount }));
+  };
+
   return (
     <>
-      <h1>Cache-aside</h1>
+      <h1>{t('title')}</h1>
       <section className="intro">
+        <p>{t('intro.how')}</p>
+        <p>{t('intro.ttl')}</p>
         <p>
-          With cache-aside the application owns the cache. On a read it first asks Redis; on a hit it returns the cached
-          value, on a miss it queries the database, stores the result in Redis with a TTL and returns it.
+          <Trans t={t} i18nKey="intro.stampede" components={{ a: <a href="#lock" /> }} />
         </p>
-        <p>
-          The TTL bounds how stale a cached value can get. When data changes, the writer deletes (invalidates) the key, so
-          the next read misses and loads fresh data.
-        </p>
-        <p>
-          Beware of a cache stampede: when a hot key expires, many requests miss at once and all hit the database. A lock
-          around the reload fixes it, see the Lock page.
-        </p>
-        <p className="hint">
-          The database here is local SQLite, so the slider adds an artificial delay to each miss to simulate network
-          latency to a remote database.
-        </p>
+        <p className="hint">{t('intro.delay')}</p>
       </section>
 
       <FlowDiagram source={last?.source} />
 
       <section className="card controls">
         <label>
-          Product id
+          {t('controls.productId')}
           <input type="number" min={1} max={PRODUCTS} value={id} onChange={(e) => setId(e.target.valueAsNumber || 1)} />
         </label>
-        <button onClick={() => setId(randomId())}>Random</button>
+        <button onClick={() => setId(randomId())}>{t('controls.random')}</button>
         <label className="slider">
-          DB delay: {delay} ms
+          {t('controls.cost', { ms: delay })}
           <input type="range" min={0} max={1000} step={10} value={delay} onChange={(e) => setDelay(e.target.valueAsNumber)} />
         </label>
         <label>
-          Requests
+          {t('controls.requests')}
           <input type="number" min={1} max={500} value={runs} onChange={(e) => setRuns(e.target.valueAsNumber || 1)} />
         </label>
         <div className="buttons">
           <button disabled={busy} onClick={() => act(() => fetchProduct(id))}>
-            Fetch
+            {t('controls.fetch')}
           </button>
           <button disabled={busy} onClick={() => act(runMany)}>
-            Run {runs} requests
+            {t('controls.runMany', { count: runs })}
           </button>
-          <button disabled={busy} onClick={() => act(() => send('DELETE', `/cache/products/${id}`, (r) => `Invalidated product:${id} (${r.deleted} key).`))}>
-            Invalidate this key
+          <button disabled={busy} onClick={() => act(() => send('DELETE', `/cache/products/${id}`, (r) => t('notes.invalidated', { id, count: Number(r.deleted) })))}>
+            {t('controls.invalidate')}
           </button>
-          <button disabled={busy} onClick={() => act(() => send('POST', '/cache/flush', (r) => `Flushed ${r.deleted} cache keys.`))}>
-            Flush cache
+          <button disabled={busy} onClick={() => act(() => send('POST', '/cache/flush', (r) => t('notes.flushed', { count: Number(r.deleted) })))}>
+            {t('controls.flush')}
           </button>
           <button
             className="danger"
             disabled={busy}
-            onClick={() => act(() => send('POST', '/cache/flushdb', () => 'FLUSHDB done: every key in the database is gone.'))}
+            onClick={() => act(() => send('POST', '/cache/flushdb', () => t('notes.flushdb')))}
           >
             FLUSHDB
           </button>
         </div>
         <p className="hint">
-          Flush cache deletes only <code>product:*</code> keys with SCAN + UNLINK. FLUSHDB wipes every demo key, including
-          other pages' data.
+          <Trans t={t} i18nKey="controls.flushHint" components={{ code: <code /> }} />
         </p>
         {note && <p className="note">{note}</p>}
       </section>
 
       <LatencyChart samples={samples} onClear={() => setSamples([])} />
 
+      <section className="card stampede">
+        <h2>{t('stampede.title')}</h2>
+        <p className="hint">
+          <Trans t={t} i18nKey="stampede.hint" values={{ n: STAMPEDE_N }} components={{ code: <code /> }} />
+        </p>
+        <div className="buttons">
+          <button disabled={busy} onClick={() => act(() => stampede(false))}>
+            {t('stampede.without')}
+          </button>
+          <button disabled={busy} onClick={() => act(() => stampede(true))}>
+            {t('stampede.with')}
+          </button>
+        </div>
+        {stampedes.length > 0 && (
+          <table>
+            <thead>
+              <tr>
+                <th>{t('stampede.mode')}</th>
+                <th>{t('stampede.dbLoads')}</th>
+                <th>{t('stampede.served')}</th>
+                <th>{t('stampede.total')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stampedes.map((s) => (
+                <tr key={String(s.locked)}>
+                  <td>{s.locked ? t('stampede.withLock') : t('stampede.withoutLock')}</td>
+                  <td className={s.dbLoads > 1 ? 'error' : undefined}>{s.dbLoads}</td>
+                  <td>{s.served}</td>
+                  <td>{t('ms', { v: s.totalMs })}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </section>
+
       <div className="columns">
         <section className="card">
-          <h2>Last response</h2>
+          <h2>{t('last.title')}</h2>
           {last ? (
             <>
               <p>
-                <span className={`badge ${last.source}`}>{last.source === 'cache' ? 'cache hit' : 'db (miss)'}</span>
+                <span className={`badge ${last.source}`}>{last.source === 'cache' ? t('last.hit') : t('last.miss')}</span>
               </p>
               <dl>
-                <dt>Server</dt>
-                <dd>{last.serverMs} ms</dd>
-                <dt>Client</dt>
-                <dd>{last.clientMs} ms</dd>
+                <dt>{t('last.server')}</dt>
+                <dd>{t('ms', { v: last.serverMs })}</dd>
+                <dt>{t('last.client')}</dt>
+                <dd>{t('ms', { v: last.clientMs })}</dd>
                 <dt>TTL</dt>
-                <dd>{last.ttl} s</dd>
+                <dd>{t('s', { v: last.ttl })}</dd>
               </dl>
               <details>
-                <summary>Product JSON</summary>
+                <summary>{t('last.json')}</summary>
                 <pre>{JSON.stringify(last.product, null, 2)}</pre>
               </details>
             </>
           ) : (
-            <p>No request yet.</p>
+            <p>{t('last.none')}</p>
           )}
         </section>
         <CommandsPanel commands={commands} />

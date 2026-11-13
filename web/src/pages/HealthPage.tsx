@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { api, type Command } from '../api';
 import { CommandsPanel } from '../CommandsPanel';
+import './HealthPage.i18n';
 
 type Health = { redis: string; products: number; reviews: number; commands: Command[] };
 
 export function HealthPage() {
   const [health, setHealth] = useState<Health>();
   const [error, setError] = useState<string>();
+  const { t, i18n } = useTranslation('health');
 
   const load = () => {
     setError(undefined);
@@ -17,19 +20,19 @@ export function HealthPage() {
 
   return (
     <>
-      <h1>Health</h1>
-      <p>Checks that the API can reach Redis and the SQLite database.</p>
-      <button onClick={load}>Refresh</button>
+      <h1>{t('title')}</h1>
+      <p>{t('intro')}</p>
+      <button onClick={load}>{t('refresh')}</button>
       {error && <p className="error">{error}</p>}
       {health && (
         <>
           <dl>
             <dt>Redis</dt>
             <dd>{health.redis}</dd>
-            <dt>Products</dt>
-            <dd>{health.products.toLocaleString()}</dd>
-            <dt>Reviews</dt>
-            <dd>{health.reviews.toLocaleString()}</dd>
+            <dt>{t('products')}</dt>
+            <dd>{health.products.toLocaleString(i18n.language)}</dd>
+            <dt>{t('reviews')}</dt>
+            <dd>{health.reviews.toLocaleString(i18n.language)}</dd>
           </dl>
           <CommandsPanel commands={health.commands} />
         </>
